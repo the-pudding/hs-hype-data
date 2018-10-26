@@ -1,3 +1,4 @@
 # HS Hype Data
 
-`npm start`
+- `npm run draft`
+- `npm run merge`
