@@ -42,6 +42,7 @@ const rsciClean = rsci.map(d => ({
   ...d,
   bbrID: getID(d.link)
 }));
+
 // .map(d => ({
 //   ...d,
 //   nba: getNBA(d.bbrID)
@@ -75,7 +76,8 @@ players.forEach(p => {
 });
 
 const withDraft = rsciClean.map(d => {
-  const match = draft.find(p => p.link === d.link);
+  const match = draft.find(p => p.link && p.link === d.link);
+
   const draftInfo = match
     ? {
         pick_overall: match.Rk,
