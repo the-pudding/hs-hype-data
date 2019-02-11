@@ -1,0 +1,140 @@
+---
+title: "Analysis"
+author: "Amber Thomas"
+date: "2/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Intro
+
+Is there any correlation between a student making it onto the top 100 hs players list and doing well in the NBA? Do they make it into the NBA more often? Can we predict their success? 
+
+```{r}
+library(tidyverse)
+library(here)
+```
+
+
+## Importing Data
+
+```{r}
+draft <- read.csv("../output/draft.csv", header = TRUE, stringsAsFactors = FALSE)
+overview <- read.csv("../output/overview.csv", header = TRUE, stringsAsFactors = FALSE)
+allPlayers <- read.csv("../output/players.csv", header = TRUE, stringsAsFactors = FALSE)
+seasons <- read.csv("../output/seasons.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+## Exploration
+
+### What % of students on the Top 100 List in HS make it to the NBA? 
+
+First, we can only keep players that were recruited before 2013
+
+```{r}
+players <- allPlayers %>% 
+  filter((draft_year <= 2014 | is.na(draft_year)) & (recruit_year <= 2013 | is.na(recruit_year)))
+```
+
+```{r}
+top100 <- players %>% 
+  filter(!is.na(recruit_year))
+
+toNBA <- players %>% 
+  filter(!is.na(draft_year)) %>% 
+  filter(!is.na(recruit_year)) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count / nrow(top100))
+
+toNBA$percent
+```
+
+Alright, so about 27% of students from the Top 100 list make it to the NBA at all. 
+
+What about students not in the Top 100 that make it to the NBA?
+
+```{r}
+notTop <- players %>% 
+  filter(is.na(recruit_year))
+
+lowToNBA <- players %>% 
+  filter(!is.na(draft_year)) %>% 
+  filter(is.na(recruit_year)) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count / nrow(notTop))
+
+lowToNBA$percent
+```
+How many of the top 100 make it past two years? 
+
+```{r}
+top100 %>% 
+  filter(valid_seasons >= 2) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count/toNBA$count)
+```
+12% of players from the Top 100 list play more than 2 seasons. 
+
+And not in top 100 that make it past 2 years? 
+
+```{r}
+notTop %>% 
+  filter(valid_seasons >= 2) %>% 
+  summarise(count = n()) %>% 
+  mutate(percent = count/nrow(notTop))
+```
+
+
+### How many students not on the Top 100 list make it to the NBA? 
+
+```{r}
+notOnList <- players %>% 
+  filter(is.na(recruit_year)) %>% 
+  filter(valid_seasons >= 2)
+
+contract <- draft %>% 
+  filter(link != "")
+  
+
+# what % of people drafted, that played more at least 1 season were not on Top 100 for high school?
+nrow(notOnList) / nrow(players)
+```
+
+
+How many were drafted and didn't get a contract? 
+
+```{r}
+noContract <- allPlayers %>% 
+  filter(!is.na(draft_year)) %>% 
+  filter(link == "")
+```
+
+What's the vorp distribution for each hs rank? 
+
+```{r}
+vorp <- top100 %>% 
+  filter(valid_seasons >= 2) %>% 
+  mutate(groupRank = rank - (rank %% 10))
+
+ggplot(vorp, aes(x = groupRank, y = nba_median_vorp_rank, group = groupRank)) + geom_boxplot()
+```
+
+```{r}
+ggplot(vorp, aes(x = groupRank, y = nba_median_pipm_rank, group = groupRank)) + geom_boxplot()
+```
+
+What about average rank for groups of vorp values? 
+
+```{r}
+vorpGroups <- top100 %>% 
+  filter(valid_seasons >= 2) %>% 
+  mutate(groupVorp = nba_median_vorp_rank - (nba_median_vorp_rank %% 25)) %>% 
+  group_by(groupVorp) %>% 
+  summarise(avgRank = median(rank),
+            sd = sd(rank))
+```
+
