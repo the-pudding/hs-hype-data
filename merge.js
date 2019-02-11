@@ -37,6 +37,17 @@ function getNBA(id) {
   if (match) return match.values;
 }
 
+function findDraftMatch(d) {
+  const hard = draft.find(p => p.link && p.link === d.link);
+  if (hard) return hard;
+
+  const soft = draft.find(p => p.name === d.name && p.college === d.college);
+  if (soft) {
+    console.log(soft);
+    return soft;
+  } else return null;
+}
+
 // add season data if nba players
 const rsciClean = rsci.map(d => ({
   ...d,
@@ -76,7 +87,7 @@ players.forEach(p => {
 });
 
 const withDraft = rsciClean.map(d => {
-  const match = draft.find(p => p.link && p.link === d.link);
+  const match = findDraftMatch(d);
 
   const draftInfo = match
     ? {

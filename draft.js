@@ -24,10 +24,17 @@ function download() {
             const Year = $(c[1]).text();
             const Rd = $(c[3]).text();
             const Pk = $(c[4]).text();
+            const college = $(c[10])
+              .text()
+              .trim();
+            const name = $(c[6])
+              .text()
+              .trim();
             const link = $(c[6])
               .find('a')
               .attr('href');
-            result.push({ link, Rk, Year, Rd, Pk });
+
+            result.push({ link, name, college, Rk, Year, Rd, Pk });
           });
         resolve(result);
       }
