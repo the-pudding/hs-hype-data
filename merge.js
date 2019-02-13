@@ -129,6 +129,38 @@ function validSeasons(id) {
   return match.length;
 }
 
+function getMean(id, stat) {
+  if (!id) return null;
+  const match = seasons
+    .filter(d => d.bbrID === id)
+    .map(d => ({
+      ...d,
+      total_mp: +d.G * +d.MP
+    }))
+    .filter(d => {
+      const mp = MIN_MP_SPECIAL[d.Season] || MIN_MP_DEFAULT;
+      return d.total_mp >= mp;
+    });
+  if (!match.length) return null;
+  return d3.mean(match, v => v[stat]);
+}
+
+function getMedian(id, stat) {
+  if (!id) return null;
+  const match = seasons
+    .filter(d => d.bbrID === id)
+    .map(d => ({
+      ...d,
+      total_mp: +d.G * +d.MP
+    }))
+    .filter(d => {
+      const mp = MIN_MP_SPECIAL[d.Season] || MIN_MP_DEFAULT;
+      return d.total_mp >= mp;
+    });
+  if (!match.length) return null;
+  return d3.median(match, v => v[stat]);
+}
+
 function getRankMean(id, stat) {
   if (!id) return null;
   const match = seasons
@@ -163,6 +195,10 @@ function getRankMedian(id, stat) {
 
 withRank = withDraft.map(d => ({
   ...d,
+  nba_median_vorp: getMedian(d.bbrID, 'VORP'),
+  nba_mean_vorp: getMean(d.bbrID, 'VORP'),
+  nba_median_pipm: getMedian(d.bbrID, 'PIPM'),
+  nba_mean_pipm: getMean(d.bbrID, 'PIPM'),
   nba_median_vorp_rank: getRankMedian(d.bbrID, 'VORP'),
   nba_mean_vorp_rank: getRankMean(d.bbrID, 'VORP'),
   nba_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM'),
