@@ -138,3 +138,83 @@ vorpGroups <- top100 %>%
             sd = sd(rank))
 ```
 
+### Creating data for graphic
+
+For each player, I need to know if they
+
+* Were on the Top 100 list in HS
+* Skipped college, stopped during/after college
+* Were drafted by the NBA
+* Signed their NBA contract
+* Made it past their rookie contract
+* how well did they do once they got there? 
+
+```{r}
+export <- players %>% 
+  mutate(top = ifelse(is.na(recruit_year), 0, 1),
+         nba_mean_vorp = round(nba_mean_vorp, 2),
+         highSchool = case_when(
+           # did they play beyond hs?
+           college != "" | draft_year != "" ~ 1,
+           TRUE ~ 0
+         ),
+         coll = case_when(
+           # if they didn't make it past hs, they'll get an NA here
+           highSchool == 0 ~ NA_real_,
+           # if they skipped college, they'll get a 2 here
+           draft_year == recruit_year ~ 2,
+           # if they definitely played past hs and have a draft year, then they made it past college
+           highSchool == 1 & draft_year != "" ~ 1,
+           # otherwise they stopped in college
+           TRUE ~ 0
+         ),
+         draft = case_when(
+           # if they didn't make it past college, they'll get an NA here
+           is.na(coll) | coll == 0 ~ NA_real_,
+           # if they were drafted, did they have any valid seasons? 
+           coll >= 1 & valid_seasons > 0 ~ 1,
+           # otherwise, they didn't make it past being drafted
+           TRUE ~ 0
+         ),
+         rookie = case_when(
+           # if they didn't make it past the draft, they'll get an NA here
+           is.na(draft) | draft == 0 ~ NA_real_,
+           # did they make it past the first 2 years? 
+           draft == 1 & valid_seasons >= 2 ~ 1,
+           # otherwise, they didn't make it past their rookie contract
+           TRUE ~ 0
+         ),
+         success = case_when(
+           # if they didn't make it past their rookie year, they'll get an NA here
+           is.na(rookie) | rookie == 0 ~ NA_character_,
+           # if they made it this far, how good are they (based on avg. vorp score?)
+           # allstars
+           nba_mean_vorp >= 5 ~ "allstar",
+           # great players
+           between(nba_mean_vorp, 0, 5) ~ "great",
+           # good players
+           between(nba_mean_vorp, -0.5, 0) ~ "good",
+           # bad players
+           nba_mean_vorp <= -0.5 ~ "bad",
+           TRUE ~ NA_character_
+         )) %>% 
+  select(c(name, link, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
+  mutate(val = 1) %>% 
+  spread(success, val, fill = NA_real_) %>% 
+  select(-"<NA>") %>% 
+  mutate(highest = case_when(
+           !is.na(rank) & highSchool == 0 ~ "highSchool",
+           coll == 0 ~ "college",
+           draft == 0 ~ "draft",
+           rookie == 0 ~ "rookie",
+           bad > 0 ~ "bad",
+           good > 0 ~ "good",
+           great > 0 ~ "great",
+           allstar > 0 ~ "allstar",
+           TRUE ~ "other"
+         ))
+
+write.csv(export, here::here("processed_data", "playerPaths.csv"), row.names = FALSE, na = "")
+```
+
+
