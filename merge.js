@@ -37,15 +37,25 @@ function getNBA(id) {
   if (match) return match.values;
 }
 
-function findDraftMatch(d) {
-  const hard = draft.find(p => p.link && p.link === d.link);
+function findDraftMatch(player) {
+  const hard = draft.find(d => d.link && d.link === player.link);
   if (hard) return hard;
 
-  const soft = draft.find(p => p.name === d.name && p.college === d.college);
+  const soft = draft.find(
+    d =>
+      d.name === player.name && player.college && d.college === player.college
+  );
   if (soft) {
-    console.log(soft);
     return soft;
-  } else return null;
+  }
+
+  const softer = draft.find(
+    d => d.name === player.name && d.Year === player.recruit_year
+  );
+  if (softer) {
+    return softer;
+  }
+  return false;
 }
 
 // add season data if nba players
