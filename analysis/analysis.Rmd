@@ -198,7 +198,7 @@ export <- players %>%
            nba_mean_vorp <= -0.5 ~ "bad",
            TRUE ~ NA_character_
          )) %>% 
-  select(c(name, link, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
+  select(c(name, college, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
   mutate(val = 1) %>% 
   spread(success, val, fill = NA_real_) %>% 
   select(-"<NA>") %>% 
