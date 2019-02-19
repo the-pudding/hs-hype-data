@@ -88,6 +88,7 @@ players.forEach(p => {
         rsciClean.push({
           bbrID: p.key,
           name: p.values[0].name,
+          college: p.values[0].college,
           draft_year: p.values[0].Season.substring(0, 4),
           link: p.values[0].link
         });
@@ -113,6 +114,12 @@ const withDraft = rsciClean.map(d => {
     ...draftInfo
   };
 });
+
+function totalSeasons(id) {
+  if (!id) return null;
+  const match = seasons.filter(d => d.bbrID === id);
+  return match.length;
+}
 
 function validSeasons(id) {
   if (!id) return null;
@@ -193,7 +200,7 @@ function getRankMedian(id, stat) {
   return d3.median(match, v => v[`${stat}_rank`]);
 }
 
-withRank = withDraft.map(d => ({
+const withRank = withDraft.map(d => ({
   ...d,
   nba_median_vorp: getMedian(d.bbrID, 'VORP'),
   nba_mean_vorp: getMean(d.bbrID, 'VORP'),
@@ -203,6 +210,7 @@ withRank = withDraft.map(d => ({
   nba_mean_vorp_rank: getRankMean(d.bbrID, 'VORP'),
   nba_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM'),
   nba_mean_pipm_rank: getRankMean(d.bbrID, 'PIPM'),
+  total_seasons: totalSeasons(d.bbrID),
   valid_seasons: validSeasons(d.bbrID)
 }));
 
