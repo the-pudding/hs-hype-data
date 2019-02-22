@@ -246,10 +246,31 @@ withRank.sort((a, b) => {
     d3.ascending(+a.rank, +b.rank)
   );
 });
-const output = d3.csvFormat(withRank);
+
+function lastCollege(college) {
+  if (!college) return college;
+  const lower = college.toLowerCase();
+  const split = lower.replace(/,/g, ' ').split(' ');
+  const matches = split.filter(d => ['college', 'university'].includes(d));
+  if (matches.length > 1) {
+    const last = lower.lastIndexOf(matches.pop());
+    const sub = lower.substring(0, last);
+    const index = sub.lastIndexOf(',');
+    if (index < 0) console.log({ college, last, sub });
+    return college.substring(index + 1, lower.length);
+  }
+  return college;
+}
+
+const withCollege = withRank.map(d => ({
+  ...d,
+  college: lastCollege(d.college)
+}));
+
+const output = d3.csvFormat(withCollege);
 fs.writeFileSync('./output/players.csv', output);
 
-const justIDs = withRank.map(d => d.bbrID).filter(d => d);
+const justIDs = withCollege.map(d => d.bbrID).filter(d => d);
 const seasonsFiltered = seasons.filter(d => justIDs.includes(d.bbrID));
 const seasonsOutput = d3.csvFormat(seasonsFiltered);
 fs.writeFileSync('./output/seasons.csv', seasonsOutput);

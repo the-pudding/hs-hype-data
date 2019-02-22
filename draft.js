@@ -24,9 +24,14 @@ function download() {
             const Year = $(c[1]).text();
             const Rd = $(c[3]).text();
             const Pk = $(c[4]).text();
-            const college = $(c[10])
-              .text()
-              .trim();
+            const coll = $(c[10]).find('a');
+            const college = coll
+              ? coll
+                  .last()
+                  .text()
+                  .trim()
+              : '';
+
             const name = $(c[6])
               .text()
               .trim();
