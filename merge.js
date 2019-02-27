@@ -1,5 +1,6 @@
 const fs = require('fs');
 const d3 = require('d3');
+const uniq = require('lodash.uniqby');
 const usaData = require('./us-state-data.js');
 
 const MIN_NBA_YEAR = 2002;
@@ -13,7 +14,15 @@ const seasons = d3
   .csvParse(fs.readFileSync('./input/player-seasons--rank.csv', 'utf-8'))
   .filter(d => d.Season !== '2018-19');
 
-const rsci = d3.csvParse(fs.readFileSync('./input/rsci--bbr.csv', 'utf-8'));
+const rsciRaw = d3.csvParse(fs.readFileSync('./input/rsci--bbr.csv', 'utf-8'));
+
+// filter out duplicates (use second occurence)
+const unique = uniq(rsciRaw, d => `${d.name}${d.link}`);
+
+const rsci = unique.map(d => {
+  const id = `${d.name}${d.link}`;
+  return { ...rsciRaw.find(v => `${v.name}${v.link}` === id) };
+});
 
 const draft = d3.csvParse(fs.readFileSync('./output/draft.csv', 'utf-8'));
 
