@@ -73,7 +73,7 @@ How many of the top 100 make it past two years?
 
 ```{r}
 top100 %>% 
-  filter(valid_seasons >= 2) %>% 
+  filter(total_seasons >= 2) %>% 
   summarise(count = n()) %>% 
   mutate(percent = count/toNBA$count)
 ```
@@ -83,7 +83,7 @@ And not in top 100 that make it past 2 years?
 
 ```{r}
 notTop %>% 
-  filter(valid_seasons >= 2) %>% 
+  filter(total_seasons >= 2) %>% 
   summarise(count = n()) %>% 
   mutate(percent = count/nrow(notTop))
 ```
@@ -94,7 +94,7 @@ notTop %>%
 ```{r}
 notOnList <- players %>% 
   filter(is.na(recruit_year)) %>% 
-  filter(valid_seasons >= 2)
+  filter(total_seasons >= 2)
 
 contract <- draft %>% 
   filter(link != "")
@@ -117,7 +117,7 @@ What's the vorp distribution for each hs rank?
 
 ```{r}
 vorp <- top100 %>% 
-  filter(valid_seasons >= 2) %>% 
+  filter(total_seasons >= 2) %>% 
   mutate(groupRank = rank - (rank %% 10))
 
 ggplot(vorp, aes(x = groupRank, y = nba_median_vorp_rank, group = groupRank)) + geom_boxplot()
@@ -131,7 +131,7 @@ What about average rank for groups of vorp values?
 
 ```{r}
 vorpGroups <- top100 %>% 
-  filter(valid_seasons >= 2) %>% 
+  filter(total_seasons >= 2) %>% 
   mutate(groupVorp = nba_median_vorp_rank - (nba_median_vorp_rank %% 25)) %>% 
   group_by(groupVorp) %>% 
   summarise(avgRank = median(rank),
@@ -150,8 +150,17 @@ For each player, I need to know if they
 * how well did they do once they got there? 
 
 ```{r}
+colleges <- players %>% 
+  filter(!is.na(rank)) %>% 
+  count(college, sort = TRUE) %>% 
+  filter(college != "",
+         n >= 20)
+```
+
+```{r}
 export <- players %>% 
   mutate(top = ifelse(is.na(recruit_year), 0, 1),
+         smallMult = ifelse(college %in% colleges$college & !is.na(rank), 1, 0),
          nba_mean_vorp = round(nba_mean_vorp, 2),
          highSchool = case_when(
            # did they play beyond hs?
@@ -172,7 +181,7 @@ export <- players %>%
            # if they didn't make it past college, they'll get an NA here
            is.na(coll) | coll == 0 ~ NA_real_,
            # if they were drafted, did they have any valid seasons? 
-           coll >= 1 & valid_seasons > 0 ~ 1,
+           coll >= 1 & total_seasons > 0 ~ 1,
            # otherwise, they didn't make it past being drafted
            TRUE ~ 0
          ),
@@ -180,7 +189,7 @@ export <- players %>%
            # if they didn't make it past the draft, they'll get an NA here
            is.na(draft) | draft == 0 ~ NA_real_,
            # did they make it past the first 2 years? 
-           draft == 1 & valid_seasons >= 2 ~ 1,
+           draft == 1 & total_seasons >= 2 ~ 1,
            # otherwise, they didn't make it past their rookie contract
            TRUE ~ 0
          ),
@@ -189,16 +198,16 @@ export <- players %>%
            is.na(rookie) | rookie == 0 ~ NA_character_,
            # if they made it this far, how good are they (based on avg. vorp score?)
            # allstars
-           nba_mean_vorp >= 5 ~ "allstar",
+           nba_mean_vorp >= 4 ~ "allstar",
            # great players
-           between(nba_mean_vorp, 0, 5) ~ "great",
+           between(nba_mean_vorp, 2, 4) ~ "great",
            # good players
-           between(nba_mean_vorp, -0.5, 0) ~ "good",
+           between(nba_mean_vorp, -0.5, 2) ~ "good",
            # bad players
-           nba_mean_vorp <= -0.5 ~ "bad",
+           (rookie == 1 & is.na(nba_mean_vorp)) | nba_mean_vorp <= -0.5  ~ "bad",
            TRUE ~ NA_character_
          )) %>% 
-  select(c(name, college, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
+  select(c(name, college, smallMult, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
   mutate(val = 1) %>% 
   spread(success, val, fill = NA_real_) %>% 
   select(-"<NA>") %>% 
@@ -216,5 +225,13 @@ export <- players %>%
 
 write.csv(export, here::here("processed_data", "playerPaths.csv"), row.names = FALSE, na = "")
 ```
+
+```{r}
+colleges <- players %>% 
+  count(college, sort = TRUE) %>% 
+  filter(college != "",
+         n >= 20)
+```
+
 
 
