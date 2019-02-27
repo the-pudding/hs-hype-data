@@ -201,11 +201,15 @@ function getRankMedian(id, stat) {
 }
 
 const withRank = withDraft.map(d => ({
-  ...d,
+	...d,
+	nba_median_ws48: getMedian(d.bbrID, 'WS/48'),
+	nba_mean_ws48: getMean(d.bbrID, 'WS/48'),
   nba_median_vorp: getMedian(d.bbrID, 'VORP'),
   nba_mean_vorp: getMean(d.bbrID, 'VORP'),
   nba_median_pipm: getMedian(d.bbrID, 'PIPM'),
-  nba_mean_pipm: getMean(d.bbrID, 'PIPM'),
+	nba_mean_pipm: getMean(d.bbrID, 'PIPM'),
+	nba_median_ws48_rank: getRankMedian(d.bbrID, 'WS/48'),
+	nba_mean_ws48_rank: getRankMean(d.bbrID, 'WS/48'),
   nba_median_vorp_rank: getRankMedian(d.bbrID, 'VORP'),
   nba_mean_vorp_rank: getRankMean(d.bbrID, 'VORP'),
   nba_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM'),
@@ -222,7 +226,13 @@ const overview = d3.range(100).map(v => ({
     test.filter(d => d.bbrID && +d.rank < v + 2).length /
       test.filter(d => +d.rank < v + 2).length
   ),
-  count_rank_nba: test.filter(d => +d.rank === v + 1 && d.bbrID).length,
+	count_rank_nba: test.filter(d => +d.rank === v + 1 && d.bbrID).length,
+	avg_rank_ws48: Math.round(
+		d3.mean(
+			test.filter(d => +d.rank === v + 1 && d.bbrID),
+			v => v.nba_median_ws48_rank
+		)
+	),
   avg_rank_vorp: Math.round(
     d3.mean(
       test.filter(d => +d.rank === v + 1 && d.bbrID),
