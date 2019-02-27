@@ -181,7 +181,7 @@ function getRankMean(id, stat) {
       return d.total_mp >= mp;
     });
   if (!match.length) return null;
-  return d3.mean(match, v => v[`${stat}_rank`]);
+  return d3.mean(match, v => v[`${stat}_rank`] + 1);
 }
 
 function getRankMedian(id, stat) {
@@ -197,7 +197,7 @@ function getRankMedian(id, stat) {
       return d.total_mp >= mp;
     });
   if (!match.length) return null;
-  return d3.median(match, v => v[`${stat}_rank`]);
+  return d3.median(match, v => v[`${stat}_rank`] + 1);
 }
 
 const withRank = withDraft.map(d => ({
