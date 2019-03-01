@@ -145,7 +145,7 @@ function validSeasons(id) {
   return match.length;
 }
 
-function getMean(id, stat) {
+function getMean(id, stat, slice) {
   if (!id) return null;
   const match = seasons
     .filter(d => d.bbrID === id)
@@ -158,7 +158,11 @@ function getMean(id, stat) {
       return d.total_mp >= mp;
     });
   if (!match.length) return null;
-  return d3.mean(match, v => v[stat]);
+
+  match.sort((a, b) => d3.descending(+a[stat], +b[stat]));
+  const sliced = match.slice(0, slice ? 5 : 100);
+
+  return d3.mean(sliced, v => +v[stat]);
 }
 
 function getMedian(id, stat) {
@@ -174,10 +178,11 @@ function getMedian(id, stat) {
       return d.total_mp >= mp;
     });
   if (!match.length) return null;
+
   return d3.median(match, v => v[stat]);
 }
 
-function getRankMean(id, stat) {
+function getRankMean(id, stat, slice) {
   if (!id) return null;
   const match = seasons
     .filter(d => d.bbrID === id)
@@ -190,7 +195,12 @@ function getRankMean(id, stat) {
       return d.total_mp >= mp;
     });
   if (!match.length) return null;
-  return d3.mean(match, v => +v[`${stat}_rank`] + 1);
+
+  match.sort((a, b) =>
+    d3.ascending(+a[`${stat}_rank`] + 1, +b[`${stat}_rank`] + 1)
+  );
+  const sliced = match.slice(0, slice ? 5 : 100);
+  return d3.mean(sliced, v => +v[`${stat}_rank`] + 1);
 }
 
 function getRankMedian(id, stat) {
@@ -211,18 +221,42 @@ function getRankMedian(id, stat) {
 
 const withRank = withDraft.map(d => ({
   ...d,
-  nba_median_ws48: getMedian(d.bbrID, 'WS/48'),
+  // nba_median_ws48: getMedian(d.bbrID, 'WS/48'),
   nba_mean_ws48: getMean(d.bbrID, 'WS/48'),
-  nba_median_vorp: getMedian(d.bbrID, 'VORP'),
+  // nba_median_vorp: getMedian(d.bbrID, 'VORP'),
   nba_mean_vorp: getMean(d.bbrID, 'VORP'),
-  nba_median_pipm: getMedian(d.bbrID, 'PIPM'),
+  // nba_median_pipm: getMedian(d.bbrID, 'PIPM'),
   nba_mean_pipm: getMean(d.bbrID, 'PIPM'),
-  nba_median_ws48_rank: getRankMedian(d.bbrID, 'WS/48'),
+  // nba_median_wa: getMedian(d.bbrID, 'Wins Added'),
+  nba_mean_wa: getMean(d.bbrID, 'Wins Added'),
+
+  // nba_median_ws48: getMedian(d.bbrID, 'WS/48'),
+  top_mean_ws48: getMean(d.bbrID, 'WS/48', true),
+  // top_median_vorp: getMedian(d.bbrID, 'VORP'),
+  top_mean_vorp: getMean(d.bbrID, 'VORP', true),
+  // top_median_pipm: getMedian(d.bbrID, 'PIPM'),
+  top_mean_pipm: getMean(d.bbrID, 'PIPM', true),
+  // top_median_wa: getMedian(d.bbrID, 'Wins Added'),
+  top_mean_wa: getMean(d.bbrID, 'Wins Added', true),
+
+  // nba_median_ws48_rank: getRankMedian(d.bbrID, 'WS/48'),
   nba_mean_ws48_rank: getRankMean(d.bbrID, 'WS/48'),
-  nba_median_vorp_rank: getRankMedian(d.bbrID, 'VORP'),
+  // nba_median_vorp_rank: getRankMedian(d.bbrID, 'VORP'),
   nba_mean_vorp_rank: getRankMean(d.bbrID, 'VORP'),
-  nba_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM'),
+  // nba_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM'),
   nba_mean_pipm_rank: getRankMean(d.bbrID, 'PIPM'),
+  // nba_median_wa_rank: getRankMedian(d.bbrID, 'Wins Added'),
+  nba_mean_wa_rank: getRankMean(d.bbrID, 'Wins Added'),
+
+  // top_median_ws48_rank: getRankMedian(d.bbrID, 'WS/48', true),
+  top_mean_ws48_rank: getRankMean(d.bbrID, 'WS/48', true),
+  // top_median_vorp_rank: getRankMedian(d.bbrID, 'VORP', true),
+  top_mean_vorp_rank: getRankMean(d.bbrID, 'VORP', true),
+  // top_median_pipm_rank: getRankMedian(d.bbrID, 'PIPM', true),
+  top_mean_pipm_rank: getRankMean(d.bbrID, 'PIPM', true),
+  // top_median_wa_rank: getRankMedian(d.bbrID, 'Wins Added', true),
+  top_mean_wa_rank: getRankMean(d.bbrID, 'Wins Added', true),
+
   total_seasons: totalSeasons(d.bbrID),
   valid_seasons: validSeasons(d.bbrID)
 }));
