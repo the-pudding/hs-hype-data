@@ -159,12 +159,14 @@ colleges <- players %>%
 
 ```{r}
 export <- players %>% 
+  rowwise() %>% 
+  mutate(avgRank = mean(c(top_mean_vorp_rank, top_mean_wa_rank))) %>% 
+  ungroup() %>% 
   mutate(top = ifelse(is.na(recruit_year), 0, 1),
          smallMult = ifelse(college %in% colleges$college & !is.na(rank), 1, 0),
-         nba_mean_vorp = round(nba_mean_vorp, 2),
          highSchool = case_when(
            # did they play beyond hs?
-           college != "" | draft_year != "" ~ 1,
+           college != "" | link != "" | draft_year != "" ~ 1,
            TRUE ~ 0
          ),
          coll = case_when(
@@ -173,7 +175,7 @@ export <- players %>%
            # if they skipped college, they'll get a 2 here
            draft_year == recruit_year ~ 2,
            # if they definitely played past hs and have a draft year, then they made it past college
-           highSchool == 1 & draft_year != "" ~ 1,
+           (highSchool == 1 & draft_year != "") | (highSchool == 1 & valid_seasons > 0)  ~ 1,
            # otherwise they stopped in college
            TRUE ~ 0
          ),
@@ -198,16 +200,16 @@ export <- players %>%
            is.na(rookie) | rookie == 0 ~ NA_character_,
            # if they made it this far, how good are they (based on avg. vorp score?)
            # allstars
-           nba_mean_vorp >= 4 ~ "allstar",
+           avgRank <= 30 ~ "allstar",
            # great players
-           between(nba_mean_vorp, 2, 4) ~ "great",
+           between(avgRank, 30, 60) ~ "great",
            # good players
-           between(nba_mean_vorp, -0.5, 2) ~ "good",
+           between(avgRank, 60, 120) ~ "good",
            # bad players
-           (rookie == 1 & is.na(nba_mean_vorp)) | nba_mean_vorp <= -0.5  ~ "bad",
+           (rookie == 1 & is.na(avgRank)) | avgRank > 120  ~ "bad",
            TRUE ~ NA_character_
          )) %>% 
-  select(c(name, college, smallMult, rank, draft_year, draft_rd, draft_pk, recruit_year, nba_mean_vorp, top, highSchool, coll, draft, rookie, success))  %>% 
+  select(c(name, college, link, smallMult, rank, draft_year, draft_rd, draft_pk, recruit_year, avgRank, top, highSchool, coll, draft, rookie, success, valid_seasons))  %>% 
   mutate(val = 1) %>% 
   spread(success, val, fill = NA_real_) %>% 
   select(-"<NA>") %>% 
@@ -232,6 +234,12 @@ colleges <- players %>%
   filter(college != "",
          n >= 20)
 ```
+
+```{r}
+check <- export %>% 
+  filter(valid_seasons > 0 & is.na(draft_year))
+```
+
 
 
 
